@@ -8,13 +8,47 @@ rules:
       as they are mutable references. Pin to a full 40-character
       commit SHA instead.
     metadata:
-      category: security
-      subcategory: [vuln]
+      confidence: HIGH
       cwe:
         - "CWE-829: Inclusion of Functionality from Untrusted Control Sphere"
-      confidence: HIGH
+      description: GitLab CI component not pinned to a commit hash risks supply chain attacks.
+      endor-category: vulnerability
+      endor-tags:
+        - A08:2021
+        - A08:2025
+        - Software-and-Data-Integrity-Failures
+        - OWASP-Top-10
+        - Supply-Chain
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        GitLab CI components included via 'include: component:' accept a version
+        reference after the '@' symbol. Tags, branch names, and '~latest' are mutable
+        — an attacker with write access to the component repository can move a tag or
+        push to a branch, silently replacing the code your pipeline executes. Pinning
+        to a full 40-character commit SHA ensures the exact code revision is immutable
+        and auditable.
+      impact: HIGH
+      likelihood: MEDIUM
       references:
         - https://docs.gitlab.com/ci/components/
+        - https://cwe.mitre.org/data/definitions/829.html
+      remediation: |-
+        Replace the mutable version reference with the full 40-character commit SHA
+        of the component version you have reviewed and trust.
+
+        ```yaml
+        # Bad — mutable tag
+        include:
+          - component: gitlab.com/my-org/ci-components/sast@v1.0.0
+
+        # Good — immutable commit SHA
+        include:
+          - component: gitlab.com/my-org/ci-components/sast@e3b0c44298fc1c149afbf4c8996fb92427ae41e4
+        ```
+      technology:
+        - pkg:gitlab-ci
+      version: v1.0.0
     patterns:
       - pattern: |
           component: $VALUE
