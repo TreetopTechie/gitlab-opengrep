@@ -1,0 +1,101 @@
+# Test cases for gitlab-component-not-hash-pinned
+#
+# Positive cases: should be flagged (supply chain risk)
+# Negative cases: should NOT be flagged (properly pinned)
+
+# --- Positive: tag version ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@v1.0.0
+
+# --- Positive: branch name ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@main
+
+# --- Positive: ~latest ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@~latest
+
+# --- Positive: semver with CI variable server ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: $CI_SERVER_FQDN/my-org/security-tools/sast@1.2.3
+
+# --- Positive: feature branch ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@develop
+
+# --- Positive: release branch ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@release-2.0
+
+# --- Positive: short hash (not full 40-char SHA) ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@abc123f
+
+# --- Positive: tag version with inputs ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@v2.0.0
+    inputs:
+      stage: build
+
+# --- Positive: multiple components, mixed (both flagged) ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/tools/build@latest
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/tools/deploy@v3.1.0
+
+# --- Negative: full 40-char lowercase SHA ---
+include:
+  # ok: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@e3b0c44298fc1c149afbf4c8996fb92427ae41e4
+
+# --- Negative: full 40-char SHA with CI variable server ---
+include:
+  # ok: gitlab-component-not-hash-pinned
+  - component: $CI_SERVER_FQDN/my-org/security-tools/sast@abc0123456789abcdef0123456789abcdef01234
+
+# --- Negative: $CI_COMMIT_SHA variable ---
+include:
+  # ok: gitlab-component-not-hash-pinned
+  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/sast@$CI_COMMIT_SHA
+
+# --- Negative: full SHA with inputs ---
+include:
+  # ok: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+    inputs:
+      stage: test
+
+# --- Negative: non-component includes (should not match at all) ---
+include:
+  # ok: gitlab-component-not-hash-pinned
+  - local: .gitlab/ci/build.yml
+  # ok: gitlab-component-not-hash-pinned
+  - remote: https://example.com/ci/template.yml
+  # ok: gitlab-component-not-hash-pinned
+  - template: Auto-DevOps.gitlab-ci.yml
+
+# --- Negative: mixed includes, only hash-pinned component ---
+include:
+  - local: .gitlab/ci/setup.yml
+  # ok: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/tools/lint@deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
+  - template: Jobs/SAST.gitlab-ci.yml
+
+# --- Positive: uppercase hex in non-hash version should still flag ---
+include:
+  # ruleid: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/security-tools/sast@RELEASE-v1
+
+# --- Negative: full SHA with mixed case hex ---
+include:
+  # ok: gitlab-component-not-hash-pinned
+  - component: gitlab.com/my-org/tools/scan@aAbBcCdDeEfF00112233445566778899aAbBcCdD
